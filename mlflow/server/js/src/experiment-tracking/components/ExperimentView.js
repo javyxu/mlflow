@@ -20,7 +20,7 @@ import {
 } from 'antd';
 
 import './ExperimentView.css';
-import { getExperimentTags, getParams, getRunInfo, getRunTags } from '../reducers/Reducers';
+import { getExperimentTags, getParams, getResources, getRunInfo, getRunTags } from '../reducers/Reducers';
 import { setExperimentTagApi } from '../actions';
 import Routes from '../routes';
 import { Experiment, RunInfo } from '../sdk/MlflowMessages';
@@ -120,10 +120,12 @@ export class ExperimentView extends Component {
     paramKeyList: PropTypes.arrayOf(PropTypes.string).isRequired,
     // List of all metric keys available in the runs we're viewing
     metricKeyList: PropTypes.arrayOf(PropTypes.string).isRequired,
+    resourceKeyList: PropTypes.arrayOf(PropTypes.string).isRequired,
     // List of list of params in all the visible runs
     paramsList: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
     // List of list of metrics in all the visible runs
     metricsList: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
+    resourcesList: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
     // List of tags dictionary in all the visible runs.
     tagsList: PropTypes.arrayOf(PropTypes.object).isRequired,
     // Object of experiment tags
@@ -453,6 +455,7 @@ export class ExperimentView extends Component {
       tagsList,
       paramKeyList,
       metricKeyList,
+      resourceKeyList,
       orderByKey,
       orderByAsc,
       startTime,
@@ -464,13 +467,15 @@ export class ExperimentView extends Component {
     } = this.props;
     const { experiment_id, name } = experiment;
     const { persistedState } = this.state;
-    const { unbaggedParams, unbaggedMetrics } = persistedState;
+    const { unbaggedParams, unbaggedMetrics, unbaggedResources } = persistedState;
     const filteredParamKeys = this.getFilteredKeys(paramKeyList, COLUMN_TYPES.PARAMS);
     const filteredMetricKeys = this.getFilteredKeys(metricKeyList, COLUMN_TYPES.METRICS);
+    const filteredResourceKeys = this.getFilteredKeys(resourceKeyList, COLUMN_TYPES.RESOURECES);
     const visibleTagKeyList = Utils.getVisibleTagKeyList(tagsList);
     const filteredVisibleTagKeyList = this.getFilteredKeys(visibleTagKeyList, COLUMN_TYPES.TAGS);
     const filteredUnbaggedParamKeys = this.getFilteredKeys(unbaggedParams, COLUMN_TYPES.PARAMS);
     const filteredUnbaggedMetricKeys = this.getFilteredKeys(unbaggedMetrics, COLUMN_TYPES.METRICS);
+    const filteredUnbaggedResourceKeys = this.getFilteredKeys(unbaggedResources, COLUMN_TYPES.RESOURECES);
     const restoreDisabled = Object.keys(this.state.runsSelected).length < 1;
     const noteInfo = NoteInfo.fromTags(experimentTags);
     const startTimeColumnLabels = this.getStartTimeColumnDisplayName();
@@ -551,6 +556,20 @@ export class ExperimentView extends Component {
 
       return options;
     }, []);
+    const resourcesSortBy = filteredResourceKeys.reduce((options, sortLabelKey) => {
+      ColumnSortByOrder.forEach((order) => {
+        options.push({
+          label: sortLabelKey,
+          value: `${ExperimentViewUtil.makeCanonicalKey(
+            COLUMN_TYPES.RESOURECES,
+            sortLabelKey,
+          )}${SORT_DELIMITER_SYMBOL}${order}`,
+          order,
+        });
+      });
+
+      return options;
+    }, []);
     const paramsSortBy = filteredParamKeys.reduce((options, sortLabelKey) => {
       ColumnSortByOrder.forEach((order) => {
         options.push({
@@ -565,7 +584,7 @@ export class ExperimentView extends Component {
 
       return options;
     }, []);
-    sortOptions = [...attributesSortBy, ...metricsSortBy, ...paramsSortBy];
+    sortOptions = [...attributesSortBy, ...metricsSortBy, ...paramsSortBy, ...resourcesSortBy];
 
     return (
       <div className='ExperimentView runs-table-flex-container'>
@@ -960,9 +979,11 @@ export class ExperimentView extends Component {
                 runInfos={this.props.runInfos}
                 paramsList={this.props.paramsList}
                 metricsList={this.props.metricsList}
+                resourcesList={this.props.resourcesList}
                 tagsList={this.props.tagsList}
                 paramKeyList={filteredParamKeys}
                 metricKeyList={filteredMetricKeys}
+                resourceKeyList={filteredResourceKeys}
                 visibleTagKeyList={filteredVisibleTagKeyList}
                 categorizedUncheckedKeys={categorizedUncheckedKeys}
                 isAllChecked={this.isAllChecked()}
@@ -989,8 +1010,10 @@ export class ExperimentView extends Component {
                 // Bagged param and metric keys
                 paramKeyList={filteredParamKeys}
                 metricKeyList={filteredMetricKeys}
+                resourceKeyList={filteredResourceKeys}
                 paramsList={this.props.paramsList}
                 metricsList={this.props.metricsList}
+                resourcesList={this.props.resourcesList}
                 tagsList={this.props.tagsList}
                 categorizedUncheckedKeys={categorizedUncheckedKeys}
                 onCheck={this.props.handleColumnSelectionCheck}
@@ -1004,6 +1027,7 @@ export class ExperimentView extends Component {
                 onExpand={this.onExpand}
                 unbaggedMetrics={filteredUnbaggedMetricKeys}
                 unbaggedParams={filteredUnbaggedParamKeys}
+                unbaggedResources={filteredUnbaggedResourceKeys}
                 onAddBagged={this.addBagged}
                 onRemoveBagged={this.removeBagged}
                 nextPageToken={nextPageToken}
@@ -1209,18 +1233,21 @@ export class ExperimentView extends Component {
   };
 
   onDownloadCsv = () => {
-    const { paramKeyList, metricKeyList, runInfos, paramsList, metricsList, tagsList } = this.props;
+    const { paramKeyList, metricKeyList, runInfos, paramsList, metricsList, tagsList, resourcesList } = this.props;
     const filteredParamKeys = this.getFilteredKeys(paramKeyList, COLUMN_TYPES.PARAMS);
     const filteredMetricKeys = this.getFilteredKeys(metricKeyList, COLUMN_TYPES.METRICS);
+    const filteredResourceKeys = this.getFilteredKeys(resourcesList, COLUMN_TYPES.RESOURECES);
     const visibleTagKeys = Utils.getVisibleTagKeyList(tagsList);
     const filteredTagKeys = this.getFilteredKeys(visibleTagKeys, COLUMN_TYPES.TAGS);
     const csv = ExperimentViewUtil.runInfosToCsv(
       runInfos,
       filteredParamKeys,
       filteredMetricKeys,
+      filteredResourceKeys,
       filteredTagKeys,
       paramsList,
       metricsList,
+      resourcesList,
       tagsList,
     );
     const blob = new Blob([csv], { type: 'application/csv;charset=utf-8' });
@@ -1262,6 +1289,7 @@ export const mapStateToProps = (state, ownProps) => {
     });
   const metricKeysSet = new Set();
   const paramKeysSet = new Set();
+  const resourceKeysSet = new Set();
   const metricsList = runInfos.map((runInfo) => {
     const metricsByRunUuid = getLatestMetrics(runInfo.getRunUuid(), state);
     const metrics = Object.values(metricsByRunUuid || {});
@@ -1269,6 +1297,13 @@ export const mapStateToProps = (state, ownProps) => {
       metricKeysSet.add(metric.key);
     });
     return metrics;
+  });
+  const resourcesList = runInfos.map((runInfo) => {
+    const resources = Object.values(getResources(runInfo.getRunUuid(), state));
+    resources.forEach((resource) => {
+      resourceKeysSet.add(resource.key);
+    });
+    return resources;
   });
   const paramsList = runInfos.map((runInfo) => {
     const params = Object.values(getParams(runInfo.getRunUuid(), state));
@@ -1284,9 +1319,11 @@ export const mapStateToProps = (state, ownProps) => {
     runInfos,
     modelVersionsByRunUuid,
     metricKeyList: Array.from(metricKeysSet.values()).sort(),
+    resourceKeyList: Array.from(resourceKeysSet.values()).sort(),
     paramKeyList: Array.from(paramKeysSet.values()).sort(),
     metricsList,
     paramsList,
+    resourcesList,
     tagsList,
     experimentTags,
   };

@@ -14,6 +14,7 @@ import yaml
 from typing import Any, Dict, Sequence, List, Optional, Union, TYPE_CHECKING
 
 from mlflow.entities import Experiment, Run, RunInfo, Param, Metric, RunTag, FileInfo, ViewType
+from mlflow.entities.run_resource import Resource
 from mlflow.store.entities.paged_list import PagedList
 from mlflow.entities.model_registry import RegisteredModel, ModelVersion
 from mlflow.entities.model_registry.model_version_stages import ALL_STAGES
@@ -864,6 +865,7 @@ class MlflowClient(object):
         metrics: Sequence[Metric] = (),
         params: Sequence[Param] = (),
         tags: Sequence[RunTag] = (),
+        resources: Sequence[Resource] = (),
     ) -> None:
         """
         Log multiple metrics, params, and/or tags.
@@ -896,12 +898,13 @@ class MlflowClient(object):
             metrics = [Metric('m', 1.5, timestamp, 1)]
             params = [Param("p", 'p')]
             tags = [RunTag("t", "t")]
+            resources = [Resource("cpu", "100m")]
             experiment_id = "0"
             client = MlflowClient()
             run = client.create_run(experiment_id)
 
             # Log entities, terminate the run, and fetch run status
-            client.log_batch(run.info.run_id, metrics=metrics, params=params, tags=tags)
+            client.log_batch(run.info.run_id, metrics=metrics, params=params, tags=tags, resources=resources)
             client.set_terminated(run.info.run_id)
             run = client.get_run(run.info.run_id)
             print_run_info(run)
@@ -915,7 +918,7 @@ class MlflowClient(object):
             tags: {'t': 't'}
             status: FINISHED
         """
-        self._tracking_client.log_batch(run_id, metrics, params, tags)
+        self._tracking_client.log_batch(run_id, metrics, params, tags, resources)
 
     def log_artifact(self, run_id, local_path, artifact_path=None) -> None:
         """

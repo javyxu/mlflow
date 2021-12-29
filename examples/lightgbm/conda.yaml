@@ -5,6 +5,8 @@ dependencies:
   - python=3.6
   - pip
   - pip:
+      - --index-url https://mirrors.aliyun.com/pypi/simple/
       - mlflow>=1.6.0
       - matplotlib
       - lightgbm
+      - boto3

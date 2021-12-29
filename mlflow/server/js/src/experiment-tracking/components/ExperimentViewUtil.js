@@ -214,9 +214,11 @@ export default class ExperimentViewUtil {
     runInfos,
     paramKeyList,
     metricKeyList,
+    resourceKeyList,
     tagKeyList,
     paramsList,
     metricsList,
+    resourcesList,
     tagsList,
   ) {
     const columns = [
@@ -230,6 +232,7 @@ export default class ExperimentViewUtil {
       'Status',
       ...paramKeyList,
       ...metricKeyList,
+      ...resourceKeyList,
       ...tagKeyList,
     ];
 
@@ -246,6 +249,7 @@ export default class ExperimentViewUtil {
       ];
       const paramsMap = ExperimentViewUtil.toParamsMap(paramsList[index]);
       const metricsMap = ExperimentViewUtil.toMetricsMap(metricsList[index]);
+      const resourcesMap = ExperimentViewUtil.toMetricsMap(resourcesList[index]);
       const tagsMap = tagsList[index];
 
       paramKeyList.forEach((paramKey) => {
@@ -258,6 +262,13 @@ export default class ExperimentViewUtil {
       metricKeyList.forEach((metricKey) => {
         if (metricsMap[metricKey]) {
           row.push(metricsMap[metricKey].getValue());
+        } else {
+          row.push('');
+        }
+      });
+      resourceKeyList.forEach((resourceKey) => {
+        if (resourcesMap[resourceKey]) {
+          row.push(resourcesMap[resourceKey].getValue());
         } else {
           row.push('');
         }
@@ -516,6 +527,17 @@ export default class ExperimentViewUtil {
   }
 
   /**
+   * Turn a list of resources to a map of metric key to metric.
+   */
+   static toResourcesMap(resources) {
+    const ret = {};
+    resources.forEach((resource) => {
+      ret[resource.key] = resource;
+    });
+    return ret;
+  }
+
+  /**
    * Turn a list of param to a map of metric key to metric.
    */
   static toParamsMap(params) {
@@ -671,9 +693,11 @@ export default class ExperimentViewUtil {
     categorizedUncheckedKeys,
     paramKeyList,
     metricKeyList,
+    resourceKeyList,
     runInfos,
     paramsList,
     metricsList,
+    resourcesList,
     tagsList,
   }) {
     const attributeColumnsToTags = {
@@ -695,6 +719,10 @@ export default class ExperimentViewUtil {
     let metricColumnsToUncheck = _.difference(
       metricKeyList,
       categorizedUncheckedKeys[COLUMN_TYPES.METRICS],
+    );
+    let resourceColumnsToUncheck = _.difference(
+      resourceKeyList,
+      categorizedUncheckedKeys[COLUMN_TYPES.RESOURECES],
     );
     let tagColumnsToUncheck = _.difference(tagKeyList, categorizedUncheckedKeys[COLUMN_TYPES.TAGS]);
 
@@ -750,6 +778,12 @@ export default class ExperimentViewUtil {
         metricColumnsToUncheck,
         ExperimentViewUtil.toMetricsMap(metricsList[index - 1]),
         ExperimentViewUtil.toMetricsMap(metricsList[index]),
+      );
+
+      resourceColumnsToUncheck = dropDiffColumns(
+        resourceColumnsToUncheck,
+        ExperimentViewUtil.toResourcesMap(resourcesList[index - 1]),
+        ExperimentViewUtil.toResourcesMap(resourcesList[index]),
       );
 
       tagColumnsToUncheck = dropDiffColumns(

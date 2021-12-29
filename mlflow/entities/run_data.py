@@ -1,10 +1,12 @@
 from mlflow.entities._mlflow_object import _MLflowObject
 from mlflow.entities.metric import Metric
 from mlflow.entities.param import Param
+from mlflow.entities.run_resource import Resource
 from mlflow.entities.run_tag import RunTag
 from mlflow.protos.service_pb2 import (
     RunData as ProtoRunData,
     Param as ProtoParam,
+    RunResource as ProtoRunResource,
     RunTag as ProtoRunTag,
 )
 
@@ -14,7 +16,7 @@ class RunData(_MLflowObject):
     Run data (metrics and parameters).
     """
 
-    def __init__(self, metrics=None, params=None, tags=None):
+    def __init__(self, metrics=None, params=None, tags=None, resources=None):
         """
         Construct a new :py:class:`mlflow.entities.RunData` instance.
         :param metrics: List of :py:class:`mlflow.entities.Metric`.
@@ -27,6 +29,7 @@ class RunData(_MLflowObject):
         self._metrics = {metric.key: metric.value for metric in self._metric_objs}
         self._params = {param.key: param.value for param in (params or [])}
         self._tags = {tag.key: tag.value for tag in (tags or [])}
+        self._resources = {resource.key: resource.value for resource in (resources or [])}
 
     @property
     def metrics(self):
@@ -47,6 +50,11 @@ class RunData(_MLflowObject):
         """Dictionary of tag key (string) -> tag value for the current run."""
         return self._tags
 
+    @property
+    def resources(self):
+        """Dictionary of resource key (string) -> resource value for the current run."""
+        return self._resources
+
     def _add_metric(self, metric):
         self._metrics[metric.key] = metric.value
         self._metric_objs.append(metric)
@@ -56,12 +64,16 @@ class RunData(_MLflowObject):
 
     def _add_tag(self, tag):
         self._tags[tag.key] = tag.value
+    
+    def _add_resource(self, resource):
+        self._resources[resource.key] = resource.value
 
     def to_proto(self):
         run_data = ProtoRunData()
         run_data.metrics.extend([m.to_proto() for m in self._metric_objs])
         run_data.params.extend([ProtoParam(key=key, value=val) for key, val in self.params.items()])
         run_data.tags.extend([ProtoRunTag(key=key, value=val) for key, val in self.tags.items()])
+        run_data.resources.extend([ProtoRunResource(key=key, value=val) for key, val in self.resources.items()])
         return run_data
 
     def to_dictionary(self):
@@ -69,16 +81,19 @@ class RunData(_MLflowObject):
             "metrics": self.metrics,
             "params": self.params,
             "tags": self.tags,
+            "resources": self.resources,
         }
 
     @classmethod
     def from_proto(cls, proto):
         run_data = cls()
-        # iterate proto and add metrics, params, and tags
+        # iterate proto and add metrics, params, tags and resources
         for proto_metric in proto.metrics:
             run_data._add_metric(Metric.from_proto(proto_metric))
         for proto_param in proto.params:
             run_data._add_param(Param.from_proto(proto_param))
         for proto_tag in proto.tags:
             run_data._add_tag(RunTag.from_proto(proto_tag))
+        for proto_resource in proto.resources:
+            run_data._add_resource(Resource.from_proto(proto_resource))
         return run_data

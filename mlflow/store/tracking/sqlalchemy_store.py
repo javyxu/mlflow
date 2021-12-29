@@ -17,6 +17,7 @@ from mlflow.store.tracking.dbmodels.models import (
     SqlMetric,
     SqlParam,
     SqlTag,
+    SqlResoure,
     SqlExperimentTag,
     SqlLatestMetric,
 )
@@ -745,6 +746,19 @@ class SqlAlchemyStore(AbstractStore):
                     error_code=INVALID_STATE,
                 )
             session.delete(filtered_tags[0])
+    
+    def set_resource(self, run_id, resource):
+        """
+        Set a resource on a run.
+
+        :param run_id: String ID of the run
+        :param resource: RunResource instance to log
+        """
+        with self.ManagedSessionMaker() as session:
+            # _validate_tag(resource.key, resource.value)
+            run = self._get_run(run_uuid=run_id, session=session)
+            self._check_run_is_active(run)
+            session.merge(SqlResoure(run_uuid=run_id, key=resource.key, value=resource.value))
 
     def _search_runs(
         self, experiment_ids, filter_string, run_view_type, max_results, order_by, page_token
@@ -803,7 +817,7 @@ class SqlAlchemyStore(AbstractStore):
 
         return runs, next_page_token
 
-    def log_batch(self, run_id, metrics, params, tags):
+    def log_batch(self, run_id, metrics, params, tags, resources):
         _validate_run_id(run_id)
         _validate_batch_log_data(metrics, params, tags)
         _validate_batch_log_limits(metrics, params, tags)
@@ -817,6 +831,8 @@ class SqlAlchemyStore(AbstractStore):
                 self.log_metric(run_id, metric)
             for tag in tags:
                 self.set_tag(run_id, tag)
+            for resource in resources:
+                self.set_resource(run_id, resource)
         except MlflowException as e:
             raise e
         except Exception as e:

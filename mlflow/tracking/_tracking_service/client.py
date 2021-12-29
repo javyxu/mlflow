@@ -285,7 +285,7 @@ class TrackingServiceClient(object):
         """
         self.store.delete_tag(run_id, key)
 
-    def log_batch(self, run_id, metrics=(), params=(), tags=()):
+    def log_batch(self, run_id, metrics=(), params=(), tags=(), resources=()):
         """
         Log multiple metrics, params, and/or tags.
 
@@ -307,7 +307,7 @@ class TrackingServiceClient(object):
             _validate_param_name(param.key)
         for tag in tags:
             _validate_tag_name(tag.key)
-        self.store.log_batch(run_id=run_id, metrics=metrics, params=params, tags=tags)
+        self.store.log_batch(run_id=run_id, metrics=metrics, params=params, tags=tags, resources=resources)
 
     def _record_logged_model(self, run_id, mlflow_model):
         from mlflow.models import Model

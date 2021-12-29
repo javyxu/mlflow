@@ -3,6 +3,7 @@ export const COLUMN_TYPES = {
   PARAMS: 'params',
   METRICS: 'metrics',
   TAGS: 'tags',
+  RESOURECES: 'resources',
 };
 export const MLMODEL_FILE_NAME = 'MLmodel';
 export const ONE_MB = 1024 * 1024;
@@ -52,6 +53,7 @@ export const DEFAULT_CATEGORIZED_UNCHECKED_KEYS = {
   [COLUMN_TYPES.ATTRIBUTES]: [],
   [COLUMN_TYPES.PARAMS]: [],
   [COLUMN_TYPES.METRICS]: [],
+  [COLUMN_TYPES.RESOURECES]: [],
   [COLUMN_TYPES.TAGS]: [],
 };
 export const DEFAULT_DIFF_SWITCH_SELECTED = false;

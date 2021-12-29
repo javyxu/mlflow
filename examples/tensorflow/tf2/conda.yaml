@@ -5,5 +5,7 @@ dependencies:
   - python=3.6
   - pip
   - pip:
+    - --index-url https://mirrors.aliyun.com/pypi/simple/
     - mlflow
     - tensorflow==2.0.0
+    - boto3

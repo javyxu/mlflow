@@ -14,6 +14,7 @@ from mlflow.entities.run_data import RunData
 from mlflow.entities.run_info import RunInfo
 from mlflow.entities.run_status import RunStatus
 from mlflow.entities.run_tag import RunTag
+from mlflow.entities.run_resource import RunResource
 from mlflow.entities.source_type import SourceType
 from mlflow.entities.view_type import ViewType
 
@@ -27,6 +28,7 @@ __all__ = [
     "RunInfo",
     "RunStatus",
     "RunTag",
+    "RunResource",
     "ExperimentTag",
     "SourceType",
     "ViewType",

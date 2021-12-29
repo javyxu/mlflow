@@ -13,6 +13,7 @@ from google.protobuf import descriptor
 
 from mlflow.entities import Metric, Param, RunTag, ViewType, ExperimentTag, FileInfo
 from mlflow.entities.model_registry import RegisteredModelTag, ModelVersionTag
+from mlflow.entities.run_resource import Resource
 from mlflow.exceptions import MlflowException
 from mlflow.models import Model
 from mlflow.models.model import MLMODEL_FILE_NAME
@@ -621,8 +622,9 @@ def _log_batch():
     metrics = [Metric.from_proto(proto_metric) for proto_metric in request_message.metrics]
     params = [Param.from_proto(proto_param) for proto_param in request_message.params]
     tags = [RunTag.from_proto(proto_tag) for proto_tag in request_message.tags]
+    resources = [Resource.from_proto(proto_resource) for proto_resource in request_message.resources]
     _get_tracking_store().log_batch(
-        run_id=request_message.run_id, metrics=metrics, params=params, tags=tags
+        run_id=request_message.run_id, metrics=metrics, params=params, tags=tags, resources=resources
     )
     response_message = LogBatch.Response()
     response = Response(mimetype="application/json")

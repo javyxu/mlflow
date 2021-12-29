@@ -176,6 +176,48 @@ export const paramsByRunUuid = (state = {}, action) => {
   }
 };
 
+export const getResources = (runUuid, state) => {
+  const resources = state.entities.resourcesByRunUuid[runUuid];
+  if (resources) {
+    return resources;
+  } else {
+    return {};
+  }
+};
+
+export const resourcesByRunUuid = (state = {}, action) => {
+  const resourceArrToObject = (resources) => {
+    const resourceObj = {};
+    resources.forEach((p) => (resourceObj[p.key] = Param.fromJs(p)));
+    return resourceObj;
+  };
+  switch (action.type) {
+    case fulfilled(GET_RUN_API): {
+      const { run } = action.payload;
+      const runUuid = run.info.run_uuid;
+      const resources = run.data.resources || [];
+      const newState = { ...state };
+      newState[runUuid] = resourceArrToObject(resources);
+      return newState;
+    }
+    case fulfilled(SEARCH_RUNS_API):
+    case fulfilled(LOAD_MORE_RUNS_API): {
+      const { runs } = action.payload;
+      const newState = { ...state };
+      if (runs) {
+        runs.forEach((rJson) => {
+          const runUuid = rJson.info.run_uuid;
+          const resources = rJson.data.resources || [];
+          newState[runUuid] = resourceArrToObject(resources);
+        });
+      }
+      return newState;
+    }
+    default:
+      return state;
+  }
+};
+
 export const getRunTags = (runUuid, state) => state.entities.tagsByRunUuid[runUuid] || {};
 
 export const getExperimentTags = (experimentId, state) => {
@@ -363,6 +405,7 @@ export const entities = combineReducers({
   metricsByRunUuid,
   latestMetricsByRunUuid,
   paramsByRunUuid,
+  resourcesByRunUuid,
   tagsByRunUuid,
   experimentTagsByExperimentId,
   artifactsByRunUuid,

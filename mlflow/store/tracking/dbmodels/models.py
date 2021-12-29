@@ -14,6 +14,7 @@ from sqlalchemy import (
 from mlflow.entities import (
     Experiment,
     RunTag,
+    RunResource,
     Metric,
     Param,
     RunData,
@@ -206,6 +207,7 @@ class SqlRun(Base):
             metrics=[m.to_mlflow_entity() for m in self.latest_metrics],
             params=[p.to_mlflow_entity() for p in self.params],
             tags=[t.to_mlflow_entity() for t in self.tags],
+            resources=[r.to_mlflow_entity() for r in self.resources],
         )
 
         return Run(run_info=run_info, run_data=run_data)
@@ -433,3 +435,41 @@ class SqlParam(Base):
         :return: :py:class:`mlflow.entities.Param`.
         """
         return Param(key=self.key, value=self.value)
+
+
+class SqlResoure(Base):
+    """
+    DB model for :py:class:`mlflow.entities.RunTag`. These are recorded in ``tags`` table.
+    """
+
+    __tablename__ = "resources"
+
+    key = Column(String(250))
+    """
+    Tag key: `String` (limit 250 characters). *Primary Key* for ``tags`` table.
+    """
+    value = Column(String(250), nullable=True)
+    """
+    Value associated with tag: `String` (limit 250 characters). Could be *null*.
+    """
+    run_uuid = Column(String(32), ForeignKey("runs.run_uuid"))
+    """
+    Run UUID to which this tag belongs to: *Foreign Key* into ``runs`` table.
+    """
+    run = relationship("SqlRun", backref=backref("resources", cascade="all"))
+    """
+    SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlRun`.
+    """
+
+    __table_args__ = (PrimaryKeyConstraint("key", "run_uuid", name="resource_pk"),)
+
+    def __repr__(self):
+        return "<SqlRunResource({}, {})>".format(self.key, self.value)
+
+    def to_mlflow_entity(self):
+        """
+        Convert DB model to corresponding MLflow entity.
+
+        :return: :py:class:`mlflow.entities.RunTag`.
+        """
+        return RunResource(key=self.key, value=self.value)

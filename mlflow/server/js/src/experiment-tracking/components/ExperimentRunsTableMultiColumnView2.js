@@ -31,6 +31,7 @@ import { COLUMN_TYPES, ATTRIBUTE_COLUMN_LABELS, ATTRIBUTE_COLUMN_SORT_KEY } from
 const PARAM_PREFIX = '$$$param$$$';
 const METRIC_PREFIX = '$$$metric$$$';
 const TAG_PREFIX = '$$$tag$$$';
+const RESOURCE_PREFIX = '$$$resource$$$';
 const MAX_PARAMS_COLS = 3;
 const MAX_METRICS_COLS = 3;
 const MAX_TAG_COLS = 3;
@@ -45,8 +46,10 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
     paramsList: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
     // List of list of metrics in all the visible runs
     metricsList: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
+    resourcesList: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
     paramKeyList: PropTypes.arrayOf(PropTypes.string),
     metricKeyList: PropTypes.arrayOf(PropTypes.string),
+    resourceKeyList: PropTypes.arrayOf(PropTypes.string),
     visibleTagKeyList: PropTypes.arrayOf(PropTypes.string),
     // List of tags dictionary in all the visible runs.
     tagsList: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -147,6 +150,7 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
     const {
       metricKeyList,
       paramKeyList,
+      resourceKeyList,
       categorizedUncheckedKeys,
       visibleTagKeyList,
       orderByKey,
@@ -243,6 +247,29 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
         },
       ].filter((c) => !categorizedUncheckedKeys[COLUMN_TYPES.ATTRIBUTES].includes(c.headerName)),
       {
+        headerName: 'Resources',
+        children: resourceKeyList.map((resourceKey, i) => {
+          const columnKey = ExperimentViewUtil.makeCanonicalKey(COLUMN_TYPES.RESOURECES, resourceKey);
+          return {
+            headerName: resourceKey,
+            headerTooltip: resourceKey,
+            field: `${RESOURCE_PREFIX}-${resourceKey}`,
+            // `columnGroupShow` controls whether to show the column when the group is open/closed.
+            // Setting it to null means always show this column.
+            // Here we want to show the first 3 columns plus the current orderByKey column if it
+            // happens to be inside this column group.
+            columnGroupShow: i >= MAX_METRICS_COLS && columnKey !== orderByKey ? 'open' : null,
+            sortable: true,
+            headerComponentParams: {
+              ...commonSortOrderProps,
+              canonicalSortKey: columnKey,
+              computedStylesOnSortKey: headerStyle,
+            },
+            cellStyle,
+          };
+        }),
+      },
+      {
         headerName: 'Metrics',
         children: metricKeyList.map((metricKey, i) => {
           const columnKey = ExperimentViewUtil.makeCanonicalKey(COLUMN_TYPES.METRICS, metricKey);
@@ -308,8 +335,10 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
       runInfos,
       paramsList,
       metricsList,
+      resourcesList,
       paramKeyList,
       metricKeyList,
+      resourceKeyList,
       modelVersionsByRunUuid,
       tagsList,
       nextPageToken,
@@ -335,6 +364,7 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
         key,
         value: Utils.formatMetric(value),
       }));
+      const resoures = resourcesList[idx];
       const runInfo = runInfos[idx];
 
       const user = Utils.getUser(runInfo, tags);
@@ -364,6 +394,7 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
         ...getNameValueMapFromList(params, paramKeyList, PARAM_PREFIX),
         ...getNameValueMapFromList(metrics, metricKeyList, METRIC_PREFIX),
         ...getNameValueMapFromList(visibleTags, visibleTagKeyList, TAG_PREFIX),
+        ...getNameValueMapFromList(resoures, resourceKeyList, RESOURCE_PREFIX),
       };
     });
 

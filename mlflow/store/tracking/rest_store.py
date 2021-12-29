@@ -299,12 +299,14 @@ class RestStore(AbstractStore):
                     return experiment
             return None
 
-    def log_batch(self, run_id, metrics, params, tags):
+    def log_batch(self, run_id, metrics, params, tags, resources):
         metric_protos = [metric.to_proto() for metric in metrics]
         param_protos = [param.to_proto() for param in params]
         tag_protos = [tag.to_proto() for tag in tags]
+        resource_protos = [resource.to_proto() for resource in resources]
         req_body = message_to_json(
-            LogBatch(metrics=metric_protos, params=param_protos, tags=tag_protos, run_id=run_id)
+            LogBatch(metrics=metric_protos, params=param_protos, tags=tag_protos, 
+                     resources=resource_protos,run_id=run_id)
         )
         self._call_endpoint(LogBatch, req_body)
 

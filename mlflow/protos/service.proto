@@ -580,6 +580,9 @@ message RunData {
 
   // Additional metadata key-value pairs.
   repeated RunTag tags = 3;
+
+  // Additional metadata key-value pairs.
+  repeated RunResource resources = 4;
 }
 
 // Tag for a run.
@@ -587,6 +590,14 @@ message RunTag {
   // The tag key.
   optional string key = 1;
   // The tag value.
+  optional string value = 2;
+}
+
+// Resource for a run.
+message RunResource {
+  // The resource key.
+  optional string key = 1;
+  // The resource value.
   optional string value = 2;
 }
 
@@ -775,6 +786,8 @@ message CreateRun {
 
   // Additional metadata for run.
   repeated RunTag tags = 9;
+
+  repeated RunResource resources = 10;
 
   message Response {
     // The newly created run.
@@ -1053,6 +1066,7 @@ message LogBatch {
   // Tags to log. A single request can contain up to 100 tags, and up to 1000
   // metrics, params, and tags in total.
   repeated RunTag tags = 4;
+  repeated RunResource resources = 5;
   message Response {
   }
 }
